@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTcpSocket>
+#include <QElapsedTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,5 +22,8 @@ public:
 private:
     Ui::MainWindow *ui;
     QTcpSocket socket;
+    QElapsedTimer timer;
+    int c=0;
+    QByteArray tampon;
 };
 #endif // MAINWINDOW_H
