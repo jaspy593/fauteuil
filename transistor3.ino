@@ -4,7 +4,7 @@
 #include "spo2_algorithm.h"
 
 //wifi 
-const char* ssid = "MOT-Grande-Salle";
+const char* ssid = "MIT-Grande-Salle";
 const char* password = "!321poiuytreza";
 WiFiServer server(5000);
 WiFiClient client;
@@ -45,6 +45,7 @@ void setup() {
   Serial.println("Server TCP demarre sur le port:");
   Serial.println(5000);
 
+  Wire.begin(2,4);
   Serial.println("Recherche des périphériques I2C...");
    if (!particleSensor.begin(Wire, I2C_SPEED_FAST))
    {
@@ -57,7 +58,7 @@ void setup() {
   Serial.println("MAX30102 detecter");
 
   particleSensor.setup(
-    80,
+    90,
     4,
     2,
     100,
@@ -114,6 +115,7 @@ void loop() {
 
 void avancer() {
 
+  evite_obstacle(avancer);
   digitalWrite(IN1,HIGH);
   digitalWrite(IN2,LOW);
   digitalWrite(IN3,HIGH);
@@ -134,6 +136,7 @@ void reculer() {
 
 void gauche() {
 
+  evite_obstacle(gauche);
   digitalWrite(IN1,LOW);
   digitalWrite(IN2,LOW);
   digitalWrite(IN3,HIGH);
@@ -143,12 +146,13 @@ void gauche() {
 }
 
 void droite() {
-
+  
+  evite_obstacle(droite);
   digitalWrite(IN1,HIGH);
   digitalWrite(IN2,LOW);
   digitalWrite(IN3,LOW);
   digitalWrite(IN4,LOW);
-  vitesse(vitesse);
+  vitesse(Vitesse);
 
 }
 
@@ -184,7 +188,7 @@ float mesure_distance() {
   return(distance);
 }
 
-void evite_obstacle() {
+void evite_obstacle(void (*direction)(void)) {
   float distance = mesure_distance();
 
   if(distance < 10) {
@@ -198,7 +202,7 @@ void evite_obstacle() {
     arreter();
   }
   else {
-    avancer();
+    direction();
   }
 }
 
@@ -235,7 +239,7 @@ void execute_commande(String commande)
 {
   if (commande == "avancer")
   {
-    evite_obstacle();
+    avancer();
   }
 
   else if (commande == "reculer")
@@ -279,8 +283,9 @@ void lireCapteur()
     particleSensor.nextSample();
     compter++;
     
-    if(compter >= 25)
+    if(compter >= 20)
     {
+     compter = 0;
      maxim_heart_rate_and_oxygen_saturation(
        irBuffer,
        bufferLength,
@@ -315,20 +320,21 @@ void envoyerDonnees()
   if (!client || !client.connected())
     return;
 
-  client.print("BPM:");
 
   if (validHeartRate)
     client.print(heartRate);
   else
     client.print("--");
 
-  client.print(";SPO2:");
+  client.print(";");
 
   if (validSPO2)
     client.print(spo2);
   else
     client.print("--");
-
+  
+  client.print(";");
+  client.print(Vitesse);
   client.println();
 
 }
